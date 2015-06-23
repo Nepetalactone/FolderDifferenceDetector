@@ -34,15 +34,16 @@ namespace FolderDifferenceDetector
                     UploadToFtp(differences, args[2], args[3]);
                     watch.Stop();
                     Console.WriteLine("Upload done in " + watch.ElapsedMilliseconds + " milliseconds");
-                    Console.ReadKey();
                 }
             }
             else
             {
                 Console.Clear();
-                Console.WriteLine("Scan done in " + watch.ElapsedMilliseconds + ". No differences found. Press any key to end program");
+                Console.WriteLine("Scan done in " + watch.ElapsedMilliseconds + ". No differences found.");
                 Console.ReadKey();
             }
+            Console.WriteLine("Press any key to end program");
+            Console.ReadKey();
         }
 
         static void UploadToFtp(IEnumerable<MissingFile> files, string username, string password)

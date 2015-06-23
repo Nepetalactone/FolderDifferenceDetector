@@ -15,23 +15,32 @@ namespace FolderDifferenceDetector
             watch.Start();
             FolderDifferenceDetector detector = new FolderDifferenceDetector(args[0], args[1]);
             var differences = detector.DetectMissingElementsInSecondDir();
-            Console.Clear();
-            foreach (var difference in differences)
-            {
-                Console.WriteLine("MasterFile: " + difference.SourceFile + "\nTargetFile: " + difference.TargetFile);
-                Console.WriteLine(Environment.NewLine);
-            }
             watch.Stop();
-            Console.Write(Environment.NewLine);
-            Console.WriteLine("Scan done in " + watch.ElapsedMilliseconds + " milliseconds");
-            Console.WriteLine("Upload differences? y/n");
-            if (Console.ReadKey().Key.ToString().ToLower() == "y")
+            if (differences.Length != 0)
             {
-                watch.Reset();
-                watch.Start();
-                UploadToFtp(differences, args[2], args[3]);
-                watch.Stop();
-                Console.WriteLine("Upload done in " + watch.ElapsedMilliseconds + " milliseconds");
+                Console.Clear();
+                foreach (var difference in differences)
+                {
+                    Console.WriteLine("MasterFile: " + difference.SourceFile + "\nTargetFile: " + difference.TargetFile);
+                    Console.WriteLine(Environment.NewLine);
+                }
+                
+                Console.WriteLine(Environment.NewLine + "Scan done in " + watch.ElapsedMilliseconds +
+                                  " milliseconds\nUpload differences? y/n");
+                if (Console.ReadKey().Key.ToString().ToLower() == "y")
+                {
+                    watch.Reset();
+                    watch.Start();
+                    UploadToFtp(differences, args[2], args[3]);
+                    watch.Stop();
+                    Console.WriteLine("Upload done in " + watch.ElapsedMilliseconds + " milliseconds");
+                    Console.ReadKey();
+                }
+            }
+            else
+            {
+                Console.Clear();
+                Console.WriteLine("Scan done in " + watch.ElapsedMilliseconds + ". No differences found. Press any key to end program");
                 Console.ReadKey();
             }
         }
@@ -46,12 +55,12 @@ namespace FolderDifferenceDetector
                 {
                     String remoteDirectory = Path.GetDirectoryName(file.TargetFile);
 
-                    //Start with root directory first
+                    //Iteratively create directories
                     foreach (var dir in GetDirectoryStructure(remoteDirectory))
                     {
                         if (!Directory.Exists(dir))
                         {
-                            WebRequest request = WebRequest.Create("ftp:/" + dir.Replace("\\", "/"));
+                            WebRequest request = WebRequest.Create("ftp:" + dir.Replace("\\", "/"));
                             request.Method = WebRequestMethods.Ftp.MakeDirectory;
                             request.Credentials = credential;
                             using (var response = (FtpWebResponse) request.GetResponse())
@@ -71,7 +80,7 @@ namespace FolderDifferenceDetector
 
                         using (var response = (FtpWebResponse) request.GetResponse())
                         {
-                            if (response.StatusCode != FtpStatusCode.FileActionOK)
+                            if (response.StatusCode != FtpStatusCode.FileActionOK && response.StatusCode != FtpStatusCode.ClosingData)
                             {
                                 Console.WriteLine(response.StatusCode);
                             }

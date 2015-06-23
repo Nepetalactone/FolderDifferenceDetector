@@ -26,17 +26,19 @@ namespace FolderDifferenceDetector
 
         private void DetectDifferences(DirectoryInfo masterDirectory, DirectoryInfo slaveDirectory)
         {
+            //find folder in target
             Parallel.ForEach(masterDirectory.EnumerateDirectories(), masterSubDir =>
             {
                 var correspondingFolder = (from DirectoryInfo slaveSubDir in slaveDirectory.EnumerateDirectories()
                     where slaveSubDir.Name.Equals(masterSubDir.Name)
                     select slaveSubDir).FirstOrDefault();
 
+                //if folder doesn't exist, list all files in source as difference
                 if (correspondingFolder == null)
                 {
                     foreach (String file in GetAllFilesFromDirectoryAndSubdirectories(masterSubDir))
                     {
-                        _differences.Add(CreateFileTuple(file));
+                        _differences.Add(CreateMissingFileEntry(file));
                     }
                 }
                 else
@@ -46,15 +48,17 @@ namespace FolderDifferenceDetector
             }
             );
 
+            //check for each file in source directory if it exists in the target directory aswell
             Parallel.ForEach(masterDirectory.EnumerateFiles(), masterFile =>
             {
                 var correspondingFile = (from FileInfo slaveFile in slaveDirectory.EnumerateFiles()
                                          where slaveFile.Name.Equals(masterFile.Name)
                                          select slaveFile).FirstOrDefault();
 
+                //add file to difference list if it doesnt exist in the target directory
                 if (correspondingFile == null)
                 {
-                    _differences.Add(CreateFileTuple(masterFile.FullName));
+                    _differences.Add(CreateMissingFileEntry(masterFile.FullName));
                 }
                 _processedFiles++;
                 PrintProgress();
@@ -83,7 +87,7 @@ namespace FolderDifferenceDetector
             return result;
         }
 
-        private MissingFile CreateFileTuple(String masterFile)
+        private MissingFile CreateMissingFileEntry(String masterFile)
         {
             String relativePath = masterFile.Remove(0, _firstDirectory.FullName.Length);
             String targetPath = _secondDirectory.FullName + relativePath;

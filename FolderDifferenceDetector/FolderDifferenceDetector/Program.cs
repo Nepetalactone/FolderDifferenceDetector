@@ -29,6 +29,7 @@ namespace FolderDifferenceDetector
                                   " milliseconds\nUpload differences? y/n");
                 if (Console.ReadKey().Key.ToString().ToLower() == "y")
                 {
+                    Console.Clear();
                     watch.Reset();
                     watch.Start();
                     UploadToFtp(differences, args[2], args[3]);
@@ -75,15 +76,34 @@ namespace FolderDifferenceDetector
                     }
                     try
                     {
-                        WebRequest request = WebRequest.Create("ftp:" + file.TargetFile.Replace("\\", "/"));
+
+                        FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp:" + file.TargetFile.Replace("\\", "/"));
                         request.Method = WebRequestMethods.Ftp.UploadFile;
                         request.Credentials = credential;
 
-                        using (var response = (FtpWebResponse) request.GetResponse())
+                        byte[] fileContents;
+                        using (FileStream fileStream = new FileStream(file.SourceFile, FileMode.Open))
+                        {
+                            fileContents = new byte[fileStream.Length];
+                            fileStream.Read(fileContents, 0, (int)fileStream.Length);
+                        }
+
+                        request.ContentLength = fileContents.Length;
+
+                        using (Stream requestStream = request.GetRequestStream())
+                        {
+                            requestStream.Write(fileContents, 0, fileContents.Length);
+                        }
+
+                        using (var response = (FtpWebResponse)request.GetResponse())
                         {
                             if (response.StatusCode != FtpStatusCode.FileActionOK && response.StatusCode != FtpStatusCode.ClosingData)
                             {
                                 Console.WriteLine(response.StatusCode);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Successfully uploaded: " + file.TargetFile);
                             }
                         }
                     }

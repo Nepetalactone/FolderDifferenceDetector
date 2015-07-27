@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Policy;
 
 namespace FolderDifferenceDetector
 {
@@ -81,17 +82,12 @@ namespace FolderDifferenceDetector
                         request.Method = WebRequestMethods.Ftp.UploadFile;
                         request.Credentials = credential;
 
-                        byte[] fileContents;
                         using (FileStream fileStream = new FileStream(file.SourceFile, FileMode.Open))
-                        {
-                            fileContents = new byte[fileStream.Length];
-                            fileStream.Read(fileContents, 0, (int)fileStream.Length);
-                        }
-
-                        request.ContentLength = fileContents.Length;
-
                         using (Stream requestStream = request.GetRequestStream())
                         {
+                            byte[] fileContents = new byte[fileStream.Length];
+                            fileStream.Read(fileContents, 0, (int)fileStream.Length);
+                            request.ContentLength = fileContents.Length;
                             requestStream.Write(fileContents, 0, fileContents.Length);
                         }
 

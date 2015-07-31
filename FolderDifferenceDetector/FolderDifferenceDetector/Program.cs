@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.Policy;
+using System.Text;
 
 namespace FolderDifferenceDetector
 {
@@ -63,7 +63,7 @@ namespace FolderDifferenceDetector
                     {
                         if (!Directory.Exists(dir))
                         {
-                            WebRequest request = WebRequest.Create("ftp:" + dir.Replace("\\", "/"));
+                            WebRequest request = WebRequest.Create("ftp:" + EscapeFTPPath(dir).Replace("\\", "/"));
                             request.Method = WebRequestMethods.Ftp.MakeDirectory;
                             request.Credentials = credential;
                             using (var response = (FtpWebResponse) request.GetResponse())
@@ -77,8 +77,7 @@ namespace FolderDifferenceDetector
                     }
                     try
                     {
-
-                        FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp:" + file.TargetFile.Replace("\\", "/"));
+                        FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp:" + EscapeFTPPath(file.TargetFile).Replace("\\", "/"));
                         request.Method = WebRequestMethods.Ftp.UploadFile;
                         request.Credentials = credential;
 
@@ -110,6 +109,19 @@ namespace FolderDifferenceDetector
                 }
                 Console.WriteLine("Done");
             }
+        }
+
+        private static string EscapeFTPPath(string ftpPath)
+        {
+            StringBuilder builder = new StringBuilder();
+
+            foreach (string ftpPathPart in ftpPath.Split('\\'))
+            {
+                builder.Append(Uri.EscapeDataString(ftpPathPart.Replace('\\', ' ')) + '\\');
+            }
+
+            //remove final '\\'
+            return builder.ToString(0, builder.Length - 1);
         }
 
         /// <summary>

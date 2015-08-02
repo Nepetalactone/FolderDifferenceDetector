@@ -26,7 +26,7 @@ namespace FolderDifferenceDetector
                 }
                 
                 Console.WriteLine(Environment.NewLine + "Scan done in " + watch.ElapsedMilliseconds +
-                                  " milliseconds, found {0} differences\nUpload differences? y/n", differences.Length);
+                                  " milliseconds, found {0} differences.\nUpload differences? y/n", differences.Length);
                 if (Console.ReadKey().Key.ToString().ToLower() == "y")
                 {
                     Console.Clear();
@@ -34,7 +34,7 @@ namespace FolderDifferenceDetector
                     watch.Start();
                     UploadToFtp(differences, args[2], args[3]);
                     watch.Stop();
-                    Console.WriteLine("Upload done in " + watch.ElapsedMilliseconds + " milliseconds");
+                    Console.WriteLine("Upload done in " + watch.ElapsedMilliseconds + " milliseconds.");
                 }
             }
             else

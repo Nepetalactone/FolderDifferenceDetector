@@ -22,12 +22,11 @@ namespace FolderDifferenceDetector
                 Console.Clear();
                 foreach (var difference in differences)
                 {
-                    Console.WriteLine("MasterFile: " + difference.SourceFile + "\nTargetFile: " + difference.TargetFile);
-                    Console.WriteLine(Environment.NewLine);
+                    Console.WriteLine("File: {0}\n", difference.SourceFile);
                 }
                 
                 Console.WriteLine(Environment.NewLine + "Scan done in " + watch.ElapsedMilliseconds +
-                                  " milliseconds\nUpload differences? y/n");
+                                  " milliseconds, found {0} differences\nUpload differences? y/n", differences.Length);
                 if (Console.ReadKey().Key.ToString().ToLower() == "y")
                 {
                     Console.Clear();
@@ -42,10 +41,9 @@ namespace FolderDifferenceDetector
             {
                 Console.Clear();
                 Console.WriteLine("Scan done in " + watch.ElapsedMilliseconds + ". No differences found.");
+                Console.WriteLine("Press any key to end program");
                 Console.ReadKey();
             }
-            Console.WriteLine("Press any key to end program");
-            Console.ReadKey();
         }
 
         static void UploadToFtp(IEnumerable<MissingFile> files, string username, string password)
@@ -63,7 +61,7 @@ namespace FolderDifferenceDetector
                     {
                         if (!Directory.Exists(dir))
                         {
-                            WebRequest request = WebRequest.Create("ftp:" + EscapeFTPPath(dir).Replace("\\", "/"));
+                            WebRequest request = WebRequest.Create("ftp:" + EscapeFTPPath(dir));
                             request.Method = WebRequestMethods.Ftp.MakeDirectory;
                             request.Credentials = credential;
                             using (var response = (FtpWebResponse) request.GetResponse())
@@ -77,7 +75,7 @@ namespace FolderDifferenceDetector
                     }
                     try
                     {
-                        FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp:" + EscapeFTPPath(file.TargetFile).Replace("\\", "/"));
+                        FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp:" + EscapeFTPPath(file.TargetFile));
                         request.Method = WebRequestMethods.Ftp.UploadFile;
                         request.Credentials = credential;
 
@@ -121,7 +119,7 @@ namespace FolderDifferenceDetector
             }
 
             //remove final '\\'
-            return builder.ToString(0, builder.Length - 1);
+            return builder.ToString(0, builder.Length - 1).Replace("\\", "/");
         }
 
         /// <summary>

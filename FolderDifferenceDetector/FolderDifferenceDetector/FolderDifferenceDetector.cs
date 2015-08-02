@@ -52,7 +52,8 @@ namespace FolderDifferenceDetector
             Parallel.ForEach(masterDirectory.EnumerateFiles(), masterFile =>
             {
                 var correspondingFile = (from FileInfo slaveFile in slaveDirectory.EnumerateFiles()
-                                         where slaveFile.Name.Equals(masterFile.Name)
+                                         where slaveFile.Name.Equals(masterFile.Name) &&
+                                         slaveFile.Length.Equals(masterFile.Length)
                                          select slaveFile).FirstOrDefault();
 
                 //add file to difference list if it doesnt exist in the target directory
@@ -112,8 +113,8 @@ namespace FolderDifferenceDetector
             int nrOfSubFiles = 0;
             foreach (DirectoryInfo subdir in dir.GetDirectories())
             {
-                Console.Write("\r{0}", nrOfSubFiles);
                 nrOfSubFiles += GetTotalNumberOfFiles(subdir);
+                Console.Write("\r{0}", nrOfSubFiles);
             }
 
             return nrOfSubFiles + dir.GetFiles().Length;
